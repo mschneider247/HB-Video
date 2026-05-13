@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.env
+
+# Generated output
+blink-output/
+Composed/
+GoodToGo/
+
+# Root-level test videos
+*.mp4
+
+# Misc
+generation-log.json
+_bash_write_test.txt

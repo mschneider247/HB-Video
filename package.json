@@ -1,0 +1,27 @@
+{
+  "name": "habitbeast-veo",
+  "version": "1.0.0",
+  "description": "Generate HabitBeast monster fight videos using Google Veo",
+  "main": "generate.ts",
+  "scripts": {
+    "start": "ts-node server.ts",
+    "generate": "ts-node generate.ts",
+    "blink": "ts-node blink.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@google/genai": "^1.0.0",
+    "@types/express": "^5.0.6",
+    "@types/fluent-ffmpeg": "^2.1.28",
+    "@types/sharp": "^0.31.1",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "fluent-ffmpeg": "^2.1.3",
+    "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  }
+}
