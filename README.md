@@ -1,44 +1,80 @@
-# HabitBeast Veo Fight Generator
+# HB-Video
 
-Generate cartoon monster fight videos using Google Veo via the Gemini API.
+*Ah, Doctor. You have arrived. Good. The creatures are waiting.*
+
+This is the video pipeline for **HabitBeast** — the gamified habit tracker where real-world consistency powers monster PvP battles. Your laboratory generates the fight scenes.
+
+Two purposes. One pipeline:
+- **In-app fight scenes** — triggered when two players clash inside HabitBeast
+- **Social media content** — fight clips for TikTok and Instagram
+
+*Come. I will show you everything.*
+
+---
+
+## The Monsters
+
+Six subjects. Each with their own... temperament.
+
+| Name | Nature |
+|------|--------|
+| **Frank** | Massively overweight Frankenstein's monster. Slow. Devastating. |
+| **Iggs** | Tiny scrawny cyclops. Fast, erratic, completely unhinged. |
+| **Murk** | Stocky swamp creature. Wide flat head. Enormous mouth. |
+| **Stumbles** | Ragged zombie who cannot stop grinning. Ever. |
+| **Wolf** | Muscular werewolf. Tongue out. Always. |
+| **Wrapps** | Ancient mummy. Single glowing blue eye. Speaks to no one. |
+
+Monster image assets live in `../habitBeastMonsters` — a sibling directory. Keep them close.
+
+---
+
+## The Laboratory
+
+| Layer | Apparatus |
+|-------|-----------|
+| Language | TypeScript 5 + ts-node |
+| Runtime | Node.js (Windows / PowerShell) |
+| Server | Express 5.2 — port 3000 |
+| Compositing | sharp (PNG layer rendering) |
+| Video | ffmpeg via fluent-ffmpeg |
+| Secrets | `.env` — do not let it out of the castle |
+
+---
 
 ## Setup
 
-### 1. Install dependencies
 ```powershell
 npm install
 ```
 
-### 2. Set your API key (PowerShell)
-```powershell
-# Current session only
-$env:GEMINI_API_KEY = "your-key-here"
-
-# Permanent (survives restarts — then close and reopen terminal)
-[System.Environment]::SetEnvironmentVariable("GEMINI_API_KEY", "your-key-here", "User")
+Create a `.env` in the project root:
+```
+GEMINI_API_KEY=your-key-here
 ```
 
-## Usage
+---
 
+## Operation
+
+**Start the server:**
 ```powershell
-# Default fight (Frank vs Wrapps)
-npx ts-node generate.ts
-
-# Preset fights
-npx ts-node generate.ts frank-vs-wrapps
-npx ts-node generate.ts iggs-vs-wolf
-npx ts-node generate.ts murk-vs-stumbles
-
-# Custom prompt
-npx ts-node generate.ts "your custom prompt here"
+npx ts-node server.ts
 ```
 
-## Preset Fights
-| Command | Fighters |
-|---------|---------|
-| `frank-vs-wrapps` | Fat Frankenstein vs Glowing-Eye Mummy |
-| `iggs-vs-wolf` | Tiny Cyclops vs Dopey Werewolf |
-| `murk-vs-stumbles` | Hippo Swamp Monster vs Grinning Zombie |
+**Blink animation pipeline** — renders looping monster blink MP4s locally, no API required:
+```powershell
+npx ts-node blink.ts
+```
 
-## Output
-Videos are saved as `.mp4` files in the project folder with a timestamp in the filename.
+The compositing workflow (layering backgrounds, clothing, accessories → ffmpeg → final MP4) runs entirely through the Express server endpoints.
+
+---
+
+## Architecture
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full picture — current pipeline, known tech debt, and the path toward Unity-based fight choreography.
+
+---
+
+*The work continues, Doctor. It always continues.*
