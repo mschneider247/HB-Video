@@ -38,7 +38,6 @@ Monster image assets live in `../habitBeastMonsters` — a sibling directory. Ke
 | Server | Express 5.2 — port 3000 |
 | Compositing | sharp (PNG layer rendering) |
 | Video | ffmpeg via fluent-ffmpeg |
-| Secrets | `.env` — do not let it out of the castle |
 
 ---
 
@@ -48,26 +47,17 @@ Monster image assets live in `../habitBeastMonsters` — a sibling directory. Ke
 npm install
 ```
 
-Create a `.env` in the project root:
-```
-GEMINI_API_KEY=your-key-here
-```
+ffmpeg must be installed and on your PATH. [Download here](https://ffmpeg.org/download.html).
 
 ---
 
 ## Operation
 
-**Start the server:**
 ```powershell
-npx ts-node server.ts
+npm run start
 ```
 
-**Blink animation pipeline** — renders looping monster blink MP4s locally, no API required:
-```powershell
-npx ts-node blink.ts
-```
-
-The compositing workflow (layering backgrounds, clothing, accessories → ffmpeg → final MP4) runs entirely through the Express server endpoints.
+Then open **http://localhost:3000** in your browser. Everything runs through the UI — compose monsters, render blink animations, splice clips, and approve content for posting.
 
 ---
 

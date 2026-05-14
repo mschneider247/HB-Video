@@ -1,16 +1,14 @@
 {
-  "name": "habitbeast-veo",
+  "name": "hb-video",
   "version": "1.0.0",
-  "description": "Generate HabitBeast monster fight videos using Google Veo",
-  "main": "generate.ts",
+  "description": "HabitBeast monster video pipeline — local compositing, blink animation, and ffmpeg rendering",
+  "main": "server.ts",
   "scripts": {
     "start": "ts-node server.ts",
-    "generate": "ts-node generate.ts",
     "blink": "ts-node blink.ts",
     "build": "tsc"
   },
   "dependencies": {
-    "@google/genai": "^1.0.0",
     "@types/express": "^5.0.6",
     "@types/fluent-ffmpeg": "^2.1.28",
     "@types/sharp": "^0.31.1",
