@@ -521,10 +521,10 @@ async function composeFrame(opts: FrameOpts): Promise<Buffer> {
     const bgPath = path.join(MONSTERS_DIR, backgroundImage);
     if (fs.existsSync(bgPath)) {
       const bgBuf = await sharp(bgPath)
-        .resize(width, height, { fit: "cover" })
+        .resize(tw, th)
         .png()
         .toBuffer();
-      finalComposites.push({ input: bgBuf, left: 0, top: 0 });
+      finalComposites.push({ input: bgBuf, left: offsetX, top: offsetY });
     }
   }
   finalComposites.push({ input: resized, left: offsetX, top: offsetY });
