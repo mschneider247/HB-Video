@@ -23,20 +23,44 @@ router.get("/api/assets", (_req, res) => {
     monsters.push("lab-assistant");
   }
 
-  const bigClothing   = fs.readdirSync(path.join(MONSTERS_DIR, "Big")).filter(f => f.endsWith(".png"));
-  const smallClothing = fs.readdirSync(path.join(MONSTERS_DIR, "Small")).filter(f => f.endsWith(".png"));
+  function loadClothing(size: "Big" | "Small"): string[] {
+    const root = path.join(MONSTERS_DIR, size);
+    const base = fs.readdirSync(root).filter(f => f.endsWith(".png"));
+    const classDir = path.join(root, "Class");
+    const classItems = fs.existsSync(classDir)
+      ? fs.readdirSync(classDir).filter(f => f.endsWith(".png") && !f.endsWith("Bottom.png") && !f.endsWith("Top.png")).map(f => `Class/${f}`)
+      : [];
+    return [...base, ...classItems];
+  }
+  const bigClothing   = loadClothing("Big");
+  const smallClothing = loadClothing("Small");
   const bottomItems   = fs.readdirSync(path.join(MONSTERS_DIR, "Bottom")).filter(f => f.endsWith(".png"));
 
-  function loadCapes(size: "Big" | "Small"): string[] {
-    const dir = path.join(MONSTERS_DIR, size, "Paired");
-    if (!fs.existsSync(dir)) return [];
-    const files = fs.readdirSync(dir);
-    const tops = new Set(files.filter(f => /Top\.png$/i.test(f)).map(f => f.replace(/Top\.png$/i, "")));
-    const bots = new Set(files.filter(f => /Bottom\.png$/i.test(f)).map(f => f.replace(/Bottom\.png$/i, "")));
-    return [...tops].filter(name => bots.has(name)).sort();
+  function loadPaired(size: "Big" | "Small"): { capes: string[]; wigs: string[] } {
+    const result = { capes: [] as string[], wigs: [] as string[] };
+    const dirs: Array<[string, string]> = [
+      [path.join(MONSTERS_DIR, size, "Paired"), ""],
+      [path.join(MONSTERS_DIR, size, "Class"),  "Class/"],
+    ];
+    for (const [dir, prefix] of dirs) {
+      if (!fs.existsSync(dir)) continue;
+      const files = fs.readdirSync(dir);
+      const tops = new Set(files.filter(f => /Top\.png$/i.test(f)).map(f => f.replace(/Top\.png$/i, "")));
+      const bots = new Set(files.filter(f => /Bottom\.png$/i.test(f)).map(f => f.replace(/Bottom\.png$/i, "")));
+      for (const name of [...tops].filter(n => bots.has(n)).sort()) {
+        const full = prefix + name;
+        if (/Wig$/i.test(name)) result.wigs.push(full);
+        else result.capes.push(full);
+      }
+    }
+    return result;
   }
-  const bigCapes   = loadCapes("Big");
-  const smallCapes = loadCapes("Small");
+  const bigPaired   = loadPaired("Big");
+  const smallPaired = loadPaired("Small");
+  const bigCapes    = bigPaired.capes;
+  const smallCapes  = smallPaired.capes;
+  const bigWigs     = bigPaired.wigs;
+  const smallWigs   = smallPaired.wigs;
 
   const MOOD_CAPS = ["Happy", "Sad", "Okay", "Excited", "Upset"];
   const KNOWN_MUSTACHE_STYLES = new Set(["founder", "greenStash", "hairy"]);
@@ -104,6 +128,8 @@ router.get("/api/assets", (_req, res) => {
     smallClothing,
     bigCapes,
     smallCapes,
+    bigWigs,
+    smallWigs,
     bigMustaches:   bigOverlays.mustaches,
     smallMustaches: smallOverlays.mustaches,
     bigMouthStyles:   bigOverlays.mouthStyles,

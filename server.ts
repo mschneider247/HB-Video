@@ -7,6 +7,7 @@ import "./utils/ffmpeg"; // initialises ffmpeg path on import
 import assetsRouter from "./routes/assets";
 import videoRouter  from "./routes/video";
 import blinkRouter  from "./routes/blink";
+import tempoRouter  from "./routes/tempo";
 
 dotenv.config();
 
@@ -37,6 +38,7 @@ app.use("/composed",    express.static(COMPOSED_DIR));
 app.use(assetsRouter);
 app.use(videoRouter);
 app.use(blinkRouter);
+app.use(tempoRouter);
 
 // UI
 app.get("/", (_req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));

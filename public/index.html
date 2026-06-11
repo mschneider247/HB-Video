@@ -251,6 +251,9 @@
     <h2>Capes <span class="cat-hint">paired top + bottom</span></h2>
     <div class="thumb-grid" id="capeGrid"></div>
 
+    <h2>Wigs <span class="cat-hint">standalone wig layer</span></h2>
+    <div class="thumb-grid" id="wigGrid"></div>
+
     <h2 style="display:none;">Clothing (legacy fallback)</h2>
     <div class="thumb-grid" id="clothingGrid" style="display:none;"></div>
 
@@ -311,9 +314,10 @@
     <div class="canvas-label" id="centerLabel">Click a canvas to make it active · End frame optional</div>
 
     <!-- Approve / Reject bar (shown after generation) -->
-    <div id="approveBar" style="display:none;gap:12px;margin-top:4px;">
-      <button id="rejectBtn" style="flex:1;padding:10px 0;background:#3a1a1a;border:1px solid #7f1d1d;color:#f87171;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;letter-spacing:.5px;">✕ Reject &amp; Recompose</button>
-      <button id="approveBtn" style="flex:1;padding:10px 0;background:#1a3a1a;border:1px solid #14532d;color:#4ade80;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;letter-spacing:.5px;">✓ Add to Grid</button>
+    <div id="approveBar" style="display:none;gap:8px;margin-top:4px;flex-wrap:wrap;">
+      <button id="rejectBtn" style="padding:10px 14px;background:#3a1a1a;border:1px solid #7f1d1d;color:#f87171;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.5px;">✕ Discard</button>
+      <button id="addToBradyBtn" style="flex:1;min-width:120px;padding:10px 0;background:#1a2a3a;border:1px solid #1e40af;color:#93c5fd;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.5px;">🎬 Add to Brady Bunch</button>
+      <button id="addToLineupBtn" style="flex:1;min-width:120px;padding:10px 0;background:#1a3a1a;border:1px solid #15803d;color:#86efac;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.5px;">🎥 Add to Lineup Pan</button>
     </div>
 
     <!-- Screenshot panel (shown after approval) -->
@@ -430,6 +434,31 @@
       </div>
     </div>
 
+    <!-- TEMPO REEL — rapid random cycling + text fly-ins -->
+    <div class="blink-only">
+      <h2>⚡ Tempo Reel</h2>
+      <div style="font-size:10px;color:#555;line-height:1.4;margin-bottom:10px;">
+        Cycles random monsters, outfits &amp; backgrounds at increasing speed. Add up to 3 copy blocks that fly across the screen.
+      </div>
+      <div style="margin-bottom:10px;">
+        <h2>Duration <span id="tempoDurReadout" style="font-size:10px;color:#f59e0b;font-weight:700;">9s</span></h2>
+        <input type="range" id="tempoDuration" min="7" max="11" step="1" value="9" style="width:100%;accent-color:#f59e0b;">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#444;margin-top:2px;"><span>7s</span><span>11s</span></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+        <input type="text" id="tempoText1" placeholder="Text 1 — slides in at ~20%" maxlength="40"
+          style="font-size:11px;padding:7px 9px;background:#1e1e2a;border:1px solid #2a2a3a;border-radius:6px;color:#ddd;width:100%;">
+        <input type="text" id="tempoText2" placeholder="Text 2 — drops in at ~50%" maxlength="40"
+          style="font-size:11px;padding:7px 9px;background:#1e1e2a;border:1px solid #2a2a3a;border-radius:6px;color:#ddd;width:100%;">
+        <input type="text" id="tempoText3" placeholder="Text 3 — sweeps in at ~80%" maxlength="40"
+          style="font-size:11px;padding:7px 9px;background:#1e1e2a;border:1px solid #2a2a3a;border-radius:6px;color:#ddd;width:100%;">
+      </div>
+      <button id="tempoReelBtn" type="button"
+        style="width:100%;padding:11px 0;background:#451a03;border:1px solid #f59e0b;color:#fbbf24;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;letter-spacing:.5px;">
+        ⚡ Generate Tempo Reel
+      </button>
+    </div>
+
     <div class="veo-only">
       <h2>Style</h2>
       <select id="styleSelect"></select>
@@ -520,15 +549,13 @@
   // Anything unmatched gets a unique "other:<name>" slot so it never
   // evicts another item — safe default for new asset types.
   function clothingSlot(filename) {
-    const name = filename.replace(/\.png$/i, "");
-    // Beards live in the same folder as clothing but have their own exclusive
-    // slot (matches MonsterAvatar's render order — beard sits below mouth/eyes).
-    if (/Beard$/i.test(name)) return "beard";
-    if (/(CowboyHat|WizardHat|Hat|Cap)$/i.test(name)) return "hat";
-    if (/(Vest|Sash|Tee|Shirt|Tank)$/i.test(name)) return "chest";
-    if (/(Pants|Bottoms|Trunks)$/i.test(name)) return "pants";
-    if (/(Kicks|Shoes|Boots|Slippas)$/i.test(name)) return "shoes";
-    return "other:" + name;
+    const base = filename.replace(/^Class\//i, "").replace(/\.png$/i, "");
+    if (/(Beard|Strap)$/i.test(base)) return "beard";
+    if (/(CowboyHat|WizardHat|Hat|Cap|Crown)$/i.test(base)) return "hat";
+    if (/(Vest|Sash|Tee|Shirt|Tank|Nail)$/i.test(base) || /^pressed/i.test(base)) return "chest";
+    if (/(Pants|Bottoms|Trunks)$/i.test(base)) return "pants";
+    if (/(Kicks|Shoes|Boots|Slippas|Rollerblades)$/i.test(base)) return "shoes";
+    return "other:" + base;
   }
 
   // Two frames for Veo's image-to-video transitions:
@@ -547,6 +574,7 @@
     clothing: [],        // array — at most one per slot (hat/chest/pants/shoes/beard)
     bottom: null,        // from Bottom/
     cape: null,          // cape name (e.g. "blackCape") — pairs Top + Bottom from {size}/Paired/
+    wig:  null,          // wig name (e.g. "elvisWig") — independent paired wig layer
     mustache: null,      // mustache style id (e.g. "founder") — mood-aware mustache overlay
   });
   let state = {
@@ -556,7 +584,7 @@
   };
   function cur() { return state.frames[state.activeFrame]; }
   function frameIsEmpty(f) {
-    return !f.monster && !f.background && !f.mouthStyle && f.clothing.length === 0 && !f.bottom && !f.cape && !f.mustache;
+    return !f.monster && !f.background && !f.mouthStyle && f.clothing.length === 0 && !f.bottom && !f.cape && !f.wig && !f.mustache;
   }
 
   // Two preview canvases (start + end frame). Keep handles for both so each
@@ -811,7 +839,16 @@
       }
     });
 
-    // Capes (paired top + bottom) — single-select like bottom
+    // Helper: resolve the preview img src for a paired item (cape or wig).
+    // Class/ items live in Big/Class/<id>Top.png; standard items in Big/Paired/<id>Top.png.
+    function pairedPreviewSrc(name) {
+      return name.startsWith("Class/")
+        ? `/assets/${clothingSubdir}${name}Top.png`
+        : `/assets/${clothingSubdir}Paired/${name}Top.png`;
+    }
+    function pairedLabel(name) { return name.replace(/^Class\//, ""); }
+
+    // Capes (paired top + bottom) — single-select
     const capeGrid = document.getElementById("capeGrid");
     if (capeGrid) {
       capeGrid.innerHTML = "";
@@ -829,10 +866,34 @@
           div.className = "thumb" + (cur().cape === name ? " selected" : "");
           div.dataset.type = "cape";
           div.dataset.value = name;
-          // Preview = composite Top of cape (visible half) — Bottom drapes behind body
-          div.innerHTML = `<img src="/assets/${clothingSubdir}Paired/${name}Top.png" loading="lazy"><label>${name}</label>`;
+          div.innerHTML = `<img src="${pairedPreviewSrc(name)}" loading="lazy"><label>${pairedLabel(name)}</label>`;
           div.addEventListener("click", () => handleSelect("cape", name, div));
           capeGrid.appendChild(div);
+        });
+      }
+    }
+
+    // Wigs (paired top + bottom) — independent frame.wig slot
+    const wigGrid = document.getElementById("wigGrid");
+    if (wigGrid) {
+      wigGrid.innerHTML = "";
+      let wigItems = [];
+      if (isBig)        wigItems = state.assets.bigWigs   || [];
+      else if (isSmall) wigItems = state.assets.smallWigs || [];
+
+      if (!monster || monster === "lab-assistant") {
+        wigGrid.innerHTML = '<div style="font-size:11px;color:#444;padding:4px;grid-column:1/-1;">' + (!monster ? 'Select a character first' : 'No wigs for lab assistant') + '</div>';
+      } else if (wigItems.length === 0) {
+        wigGrid.innerHTML = '<div style="font-size:10px;color:#333;padding:4px;grid-column:1/-1;">No wigs available</div>';
+      } else {
+        wigItems.forEach(name => {
+          const div = document.createElement("div");
+          div.className = "thumb" + (cur().wig === name ? " selected" : "");
+          div.dataset.type = "wig";
+          div.dataset.value = name;
+          div.innerHTML = `<img src="${pairedPreviewSrc(name)}" loading="lazy"><label>${pairedLabel(name)}</label>`;
+          div.addEventListener("click", () => handleSelect("wig", name, div));
+          wigGrid.appendChild(div);
         });
       }
     }
@@ -896,6 +957,11 @@
         });
         frame.clothing.push(value);
         el.classList.add("selected");
+        // Hat and wig are mutually exclusive — equipping a hat clears the wig.
+        if (newSlot === "hat" && frame.wig) {
+          frame.wig = null;
+          document.querySelectorAll('.thumb[data-type="wig"]').forEach(t => t.classList.remove("selected"));
+        }
       }
     } else if (type === "mood") {
       // Mood is required — can be changed but not cleared. Always has a value.
@@ -924,6 +990,16 @@
         document.querySelectorAll(`.thumb[data-type="${type}"], .color-swatch[data-type="${type}"]`).forEach(t => t.classList.remove("selected"));
         frame[type] = value;
         el.classList.add("selected");
+        // Wig and hat are mutually exclusive — equipping a wig removes any hat.
+        if (type === "wig" && value) {
+          const hatItems = frame.clothing.filter(c => clothingSlot(c) === "hat");
+          hatItems.forEach(h => {
+            frame.clothing.splice(frame.clothing.indexOf(h), 1);
+            document.querySelectorAll('.thumb[data-type="clothing"]').forEach(t => {
+              if (t.dataset.value === h) t.classList.remove("selected");
+            });
+          });
+        }
       }
     }
 
@@ -938,6 +1014,7 @@
         frame.clothing = [];
         frame.mouthStyle = null;
         frame.cape = null;
+        frame.wig  = null;
         frame.mustache = null;
         // frame.bottom is universal (accessories like skateboards), keep it
         // frame.mood stays — it's a starting expression independent of monster
@@ -949,6 +1026,8 @@
         if (frame.mouthStyle && !validMouthStyles.includes(frame.mouthStyle)) frame.mouthStyle = null;
         const validCapes = isBig ? (state.assets.bigCapes || []) : (state.assets.smallCapes || []);
         if (frame.cape && !validCapes.includes(frame.cape)) frame.cape = null;
+        const validWigs = isBig ? (state.assets.bigWigs || []) : (state.assets.smallWigs || []);
+        if (frame.wig && !validWigs.includes(frame.wig)) frame.wig = null;
         const validMustaches = isBig ? (state.assets.bigMustaches || []) : (state.assets.smallMustaches || []);
         if (frame.mustache && !validMustaches.includes(frame.mustache)) frame.mustache = null;
       } else {
@@ -956,6 +1035,7 @@
         frame.clothing = [];
         frame.mouthStyle = null;
         frame.cape = null;
+        frame.wig  = null;
         frame.mustache = null;
       }
       buildClothingGrids();
@@ -1061,10 +1141,18 @@
     const size = isBig ? "Big" : "Small";
     const isCharOk = frame.monster && frame.monster !== "lab-assistant";
 
-    // Cape Bottom drapes behind the monster body — render it BEFORE the body
-    // and the universal Bottom slot so it sits at the back of the stack.
+    // Cape/wig Bottom drape behind the monster body — render BEFORE the body.
+    const pairedBottomPath = (name) => name.startsWith("Class/")
+      ? subdir + "Class/" + name.slice(6) + "Bottom.png"
+      : subdir + "Paired/" + name + "Bottom.png";
+    const pairedTopPath = (name) => name.startsWith("Class/")
+      ? subdir + "Class/" + name.slice(6) + "Top.png"
+      : subdir + "Paired/" + name + "Top.png";
     if (frame.cape && isCharOk) {
-      layers.push(subdir + "Paired/" + frame.cape + "Bottom.png");
+      layers.push(pairedBottomPath(frame.cape));
+    }
+    if (frame.wig && isCharOk) {
+      layers.push(pairedBottomPath(frame.wig));
     }
     if (frame.bottom) layers.push("Bottom/" + frame.bottom);
     if (frame.monster) layers.push(frame.monster + ".png");
@@ -1103,10 +1191,12 @@
       layers.push(eyeSubdir + EYE_FOLDER[frame.monster] + "/open.png");
     }
 
-    // Cape Top drapes over the chest + body — render it above the eyes block,
-    // ABOVE the chest clothing (which is now below the face).
+    // Cape/wig Top drapes over the chest + body — render above the eyes block.
     if (frame.cape && isCharOk) {
-      layers.push(subdir + "Paired/" + frame.cape + "Top.png");
+      layers.push(pairedTopPath(frame.cape));
+    }
+    if (frame.wig && isCharOk) {
+      layers.push(pairedTopPath(frame.wig));
     }
 
     // Beard renders ABOVE cape top so beards drape over the cape collar.
@@ -1201,6 +1291,7 @@
       clothing,
       bottom: f.bottom || null,
       cape:   f.cape   || null,
+      wig:    f.wig    || null,
       mustache:   f.mustache   || null,
       mouthStyle: f.mouthStyle || null,
       durationSec: parseInt(document.getElementById("blinkDuration").value, 10) || 8,
@@ -1234,6 +1325,7 @@
       clothing: (p.clothing || []).slice(),
       bottom: p.bottom || null,
       cape:   p.cape   || null,
+      wig:    p.wig    || null,
       mustache:   p.mustache   || null,
       mouthStyle: p.mouthStyle || null,
     };
@@ -1481,6 +1573,10 @@
       status.textContent = "❌ Pick one of the 8 standard monsters first (Lab Assistant has no fart).";
       return;
     }
+    // Reset any leftover approve bar before starting fresh.
+    document.getElementById("approveBar").classList.remove("visible");
+    pendingFile = null;
+    pendingCellSnapshot = null;
     const isFlat = f.background && f.background.startsWith("flat:");
     const bgColor = isFlat ? f.background.slice("flat:".length) : "#1a1a24";
     const backgroundImage = (!isFlat && f.background) ? f.background : null;
@@ -1507,9 +1603,24 @@
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "fart render failed");
+      // Snapshot the cell config so Brady/Lineup adds use behavior:fart to re-render
+      // with the fart choreography rather than a plain blink loop.
+      pendingCellSnapshot = {
+        monster: f.monster,
+        mood: "okay",
+        bgColor,
+        backgroundImage: backgroundImage || null,
+        clothing: (f.clothing || []).slice(),
+        bottom: f.bottom || null,
+        cape:   f.cape   || null,
+        wig:    f.wig    || null,
+        mustache:   f.mustache   || null,
+        mouthStyle: f.mouthStyle || null,
+        behavior: "fart",
+      };
       status.className = "status success";
       status.textContent = "✅ Fart sequence ready! " + data.file;
-      showVideoPreview(data.file, "/videos/");
+      showPendingVideo(data.file);
     } catch (e) {
       status.className = "status error";
       status.textContent = "❌ " + e.message;
@@ -1546,15 +1657,24 @@
 
     if (currentMode === "blink") {
       // Local sprite-swap renderer — no Veo, no money on fire
+      // Reset any leftover approve bar from a previous render before starting fresh.
+      document.getElementById("approveBar").classList.remove("visible");
+      pendingFile = null;
+      pendingCellSnapshot = null;
       const payload = blinkPayload();
-      // Snapshot the cell config now so "Add to Grid" later commits exactly what
-      // the user previewed, not whatever the composer happens to look like at click time.
+      // Snapshot the cell config now so "Add to Brady/Lineup" later commits exactly
+      // what the user previewed, not whatever the composer looks like at click time.
       pendingCellSnapshot = {
         monster: payload.monster,
         mood: payload.mood,
         bgColor: payload.bgColor,
+        backgroundImage: payload.backgroundImage || null,
         clothing: (payload.clothing || []).slice(),
         bottom: payload.bottom || null,
+        cape: payload.cape || null,
+        wig:  payload.wig  || null,
+        mustache: payload.mustache || null,
+        mouthStyle: payload.mouthStyle || null,
       };
       status.textContent = `⏳ Rendering ${payload.durationSec}s blink loop locally...`;
       try {
@@ -1738,69 +1858,72 @@
     drawAllCanvases();
   }
 
-  // ── Approve / Reject ──────────────────────────────────────────
-  document.getElementById("approveBtn").addEventListener("click", async () => {
+  // ── Add to Brady Bunch ────────────────────────────────────────
+  document.getElementById("addToBradyBtn").addEventListener("click", async () => {
     if (!pendingFile) return;
-    const approveBtn = document.getElementById("approveBtn");
-    approveBtn.disabled = true;
-
-    // ── Blink mode: "Approve" means "add this cell to the Brady Bunch grid".
-    // The preview clip itself is throwaway (the grid composer re-renders all 8 cells
-    // at 360×360), so we delete it via /api/reject to keep the Veo folder tidy and
-    // return to the composer ready for the next slot.
-    if (currentMode === "blink") {
-      const idx = nextEmptyCellIdx();
-      if (idx < 0) {
-        const status = document.getElementById("status");
-        status.className = "status error";
-        status.textContent = "❌ Grid is full. Compose Brady Bunch or clear a slot first.";
-        approveBtn.disabled = false;
-        return;
-      }
-      // Prefer the snapshot captured at render time (matches the previewed clip).
-      // Fall back to a fresh snapshot if it's somehow missing (shouldn't happen).
-      const cell = pendingCellSnapshot || snapshotCellFromActive();
-      if (!cell) {
-        const status = document.getElementById("status");
-        status.className = "status error";
-        status.textContent = "❌ No active monster — pick one before approving.";
-        approveBtn.disabled = false;
-        return;
-      }
-      setBradyCell(idx, cell);
-      // Throw away the preview file
-      const vid = document.getElementById("videoPreview");
-      vid.pause();
-      vid.src = "";
-      vid.load();
-      try {
-        await fetch("/api/reject", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ file: pendingFile }) });
-      } catch {}
+    const btn = document.getElementById("addToBradyBtn");
+    btn.disabled = true;
+    const idx = nextEmptyCellIdx();
+    if (idx < 0) {
       const status = document.getElementById("status");
-      status.className = "status success";
-      status.textContent = `✅ Slot ${idx + 1}: ${cell.monster} (${cell.mood}) — preview discarded`;
-      showComposer();
-      approveBtn.disabled = false;
+      status.className = "status error";
+      status.textContent = "❌ Brady Bunch grid is full — compose it or clear a slot first.";
+      btn.disabled = false;
       return;
     }
-
-    // Veo mode: original behavior — save to GoodToGo
-    const vid = document.getElementById("videoPreview");
-    vid.pause();
-    vid.src = "";
-    vid.load();
-    try {
-      const res  = await fetch("/api/approve", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ file: pendingFile }) });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || JSON.stringify(data));
-      // Video is now in GoodToGo — update the preview source
-      showVideoPreview(pendingFile, "/goodtogo/");
-      document.getElementById("approveBar").classList.remove("visible");
-      await loadScreenshotPanel();
-    } catch(e) {
-      alert("Approve failed: " + e.message);
-      approveBtn.disabled = false;
+    const cell = pendingCellSnapshot || snapshotCellFromActive();
+    if (!cell) {
+      const status = document.getElementById("status");
+      status.className = "status error";
+      status.textContent = "❌ No active monster — pick one before adding.";
+      btn.disabled = false;
+      return;
     }
+    setBradyCell(idx, cell);
+    const fileToDiscard = pendingFile;
+    const vid = document.getElementById("videoPreview");
+    vid.pause(); vid.src = ""; vid.load();
+    try { await fetch("/api/reject", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ file: fileToDiscard }) }); } catch {}
+    const status = document.getElementById("status");
+    const label = cell.behavior === "fart" ? `${cell.monster} 💨 fart` : `${cell.monster} (${cell.mood})`;
+    status.className = "status success";
+    status.textContent = `✅ Brady Bunch slot ${idx + 1}: ${label}`;
+    showComposer();
+    btn.disabled = false;
+  });
+
+  // ── Add to Lineup Pan ─────────────────────────────────────────
+  document.getElementById("addToLineupBtn").addEventListener("click", async () => {
+    if (!pendingFile) return;
+    const btn = document.getElementById("addToLineupBtn");
+    btn.disabled = true;
+    const idx = nextEmptyLineupIdx();
+    if (idx < 0) {
+      const status = document.getElementById("status");
+      status.className = "status error";
+      status.textContent = "❌ Lineup Pan is full — compose it or clear a slot first.";
+      btn.disabled = false;
+      return;
+    }
+    const cell = pendingCellSnapshot || snapshotCellFromActive();
+    if (!cell) {
+      const status = document.getElementById("status");
+      status.className = "status error";
+      status.textContent = "❌ No active monster — pick one before adding.";
+      btn.disabled = false;
+      return;
+    }
+    setLineupCell(idx, cell);
+    const fileToDiscard = pendingFile;
+    const vid = document.getElementById("videoPreview");
+    vid.pause(); vid.src = ""; vid.load();
+    try { await fetch("/api/reject", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ file: fileToDiscard }) }); } catch {}
+    const status = document.getElementById("status");
+    const label = cell.behavior === "fart" ? `${cell.monster} 💨 fart` : `${cell.monster} (${cell.mood})`;
+    status.className = "status success";
+    status.textContent = `✅ Lineup Pan cell ${idx + 1}: ${label}`;
+    showComposer();
+    btn.disabled = false;
   });
 
   document.getElementById("rejectBtn").addEventListener("click", async () => {
@@ -1833,6 +1956,52 @@
 
   // ── Fart button wiring ────────────────────────────────────────
   document.getElementById("fartBtn").addEventListener("click", renderFartFromActive);
+
+  // ── Tempo Reel ───────────────────────────────────────────────
+  const tempoDurEl = document.getElementById("tempoDuration");
+  const tempoDurReadout = document.getElementById("tempoDurReadout");
+  tempoDurEl.addEventListener("input", () => {
+    tempoDurReadout.textContent = tempoDurEl.value + "s";
+  });
+
+  document.getElementById("tempoReelBtn").addEventListener("click", async () => {
+    const btn = document.getElementById("tempoReelBtn");
+    const status = document.getElementById("status");
+    document.getElementById("approveBar").classList.remove("visible");
+    pendingFile = null;
+    pendingCellSnapshot = null;
+    btn.disabled = true;
+    btn.style.opacity = ".5";
+    status.className = "status";
+    const dur = parseInt(tempoDurEl.value, 10) || 9;
+    status.textContent = `⏳ Rendering ${dur}s Tempo Reel...`;
+    try {
+      const res = await fetch("/api/tempo-reel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          duration: dur,
+          texts: [
+            document.getElementById("tempoText1").value.trim(),
+            document.getElementById("tempoText2").value.trim(),
+            document.getElementById("tempoText3").value.trim(),
+          ],
+          aspectRatio: document.getElementById("aspectRatio").value,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "render failed");
+      status.className = "status success";
+      status.textContent = "✅ Tempo Reel ready! " + data.file;
+      showPendingVideo(data.file);
+    } catch (e) {
+      status.className = "status error";
+      status.textContent = "❌ " + e.message;
+    } finally {
+      btn.disabled = false;
+      btn.style.opacity = "1";
+    }
+  });
 
   // ── Zoom style picker ─────────────────────────────────────────
   let selectedZoomStyle = "punch";
@@ -2147,10 +2316,6 @@
       ? "Compose monsters then splice with screenshots and clips (no Veo cost)"
       : isBlink ? "Pick a monster and expression, render a blinking loop, add it to a grid"
       : "Select layers, compose, generate";
-    const approveBtnEl = document.getElementById("approveBtn");
-    const rejectBtnEl  = document.getElementById("rejectBtn");
-    if (approveBtnEl) approveBtnEl.textContent = isBlink ? "Add to Grid" : "Approve";
-    if (rejectBtnEl)  rejectBtnEl.textContent  = isBlink ? "Reject and Recompose" : "Reject";
     if (isSplice) loadSplicePickers();
     if (!isSplice) { updateBlinkReadouts(); updateGenerateBtn(); }
   }

@@ -19,6 +19,7 @@ router.post("/api/blink", async (req, res) => {
     clothing = [],
     bottom,
     cape,
+    wig,
     mustache,
     mouthStyle,
     durationSec = 8,
@@ -31,6 +32,7 @@ router.post("/api/blink", async (req, res) => {
     clothing?: string[];
     bottom?: string | null;
     cape?: string | null;
+    wig?: string | null;
     mustache?: string | null;
     mouthStyle?: string | null;
     durationSec?: number;
@@ -64,6 +66,7 @@ router.post("/api/blink", async (req, res) => {
       clothing: Array.isArray(clothing) ? clothing : [],
       bottom: bottom || undefined,
       cape:   cape   || undefined,
+      wig:    wig    || undefined,
       mustache:   mustache   || undefined,
       mouthStyle: mouthStyle || undefined,
       durationSec: dur,
@@ -120,8 +123,11 @@ router.post("/api/blink-grid", async (req, res) => {
     clothing: Array.isArray(c.clothing) ? c.clothing : [],
     bottom: c.bottom || undefined,
     cape:   c.cape   || undefined,
+    wig:    c.wig    || undefined,
     mustache:   c.mustache   || undefined,
     mouthStyle: c.mouthStyle || undefined,
+    behavior: (c.behavior === "fart" || c.behavior === "eyeRoll") ? c.behavior : undefined,
+    behaviorAt: typeof c.behaviorAt === "number" ? c.behaviorAt : undefined,
   }));
 
   const ts = Date.now();
@@ -157,6 +163,7 @@ router.post("/api/blink-fart", async (req, res) => {
     clothing = [],
     bottom,
     cape,
+    wig,
     mustache,
     mouthStyle,
     aspectRatio = "1:1",
@@ -167,6 +174,7 @@ router.post("/api/blink-fart", async (req, res) => {
     clothing?: string[];
     bottom?: string | null;
     cape?: string | null;
+    wig?: string | null;
     mustache?: string | null;
     mouthStyle?: string | null;
     aspectRatio?: string;
@@ -195,6 +203,7 @@ router.post("/api/blink-fart", async (req, res) => {
       clothing: Array.isArray(clothing) ? clothing : [],
       bottom: bottom || undefined,
       cape:   cape   || undefined,
+      wig:    wig    || undefined,
       mustache:   mustache   || undefined,
       mouthStyle: mouthStyle || undefined,
       preRollSec: 0.5,
@@ -251,8 +260,11 @@ router.post("/api/blink-lineup", async (req, res) => {
     clothing: Array.isArray(c.clothing) ? c.clothing : [],
     bottom: c.bottom || undefined,
     cape:   c.cape   || undefined,
+    wig:    c.wig    || undefined,
     mustache:   c.mustache   || undefined,
     mouthStyle: c.mouthStyle || undefined,
+    behavior: (c.behavior === "fart" || c.behavior === "eyeRoll") ? c.behavior : undefined,
+    behaviorAt: typeof c.behaviorAt === "number" ? c.behaviorAt : undefined,
   }));
 
   const ts = Date.now();

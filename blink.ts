@@ -32,14 +32,14 @@ const BIG_MONSTERS   = ["frank", "wolf", "murk", "biggs"] as const;
 const SMALL_MONSTERS = ["stumbles", "iggs", "wrapps", "entsy"] as const;
 type BigMonster   = typeof BIG_MONSTERS[number];
 type SmallMonster = typeof SMALL_MONSTERS[number];
-type Monster      = BigMonster | SmallMonster;
+export type Monster      = BigMonster | SmallMonster;
 // EyeState — full set ported from HabitBeast/src/constants/monsters.ts.
 // "openWide" / "partialLeft" / "partialRight" are richer variants picked at
 // each phase transition (see resolveEyeState). "openUp" is the eye-roll state,
 // triggered midway through the alternate window for sad/upset moods.
-type EyeState     = "open" | "openWide" | "partial" | "partialLeft" | "partialRight" | "closed" | "openUp";
+export type EyeState     = "open" | "openWide" | "partial" | "partialLeft" | "partialRight" | "closed" | "openUp";
 type BasePhase    = "open" | "partial";
-type Mood         = "happy" | "okay" | "excited" | "sad" | "upset";
+export type Mood         = "happy" | "okay" | "excited" | "sad" | "upset";
 
 // All seven eye states — handy for "render every reference frame" loops.
 const EYE_STATES: readonly EyeState[] =
@@ -375,7 +375,7 @@ function hexToRgb(hex: string): { r: number; g: number; b: number; alpha: number
   return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255, alpha: 1 };
 }
 
-interface FrameOpts {
+export interface FrameOpts {
   monster: Monster;
   mood: Mood;
   eyeState: EyeState;
@@ -391,6 +391,7 @@ interface FrameOpts {
    *  Paired/<cape>Top.png from the size-matched folder. Bottom layers behind
    *  the monster body, Top renders above the eyes (alongside other clothing). */
   cape?: string;
+  wig?: string;
   /** Mustache style id, e.g. "founder" / "greenStash" / "hairy". Pulls a
    *  mood-aware overlay from {size}/Mouths/ (founderHappy, greenStashSad, etc.). */
   mustache?: string;
@@ -408,11 +409,24 @@ const FART_DIR = path.join(MONSTERS_DIR, "Fart");
 const FART_FRAME_COUNT = 8;
 const fartFramePath = (n: number) => path.join(FART_DIR, `fart${n}.png`);
 
-// Cape paths — the Paired folder lives inside Big/ and Small/.
+// Cape paths — Paired/ for standard capes/wigs; Class/ for specialization capes.
+// Callers pass a "Class/<id>" prefix for class-spec items (e.g. "Class/galvanicScrew").
 const capeBottomPath = (size: "Big" | "Small", cape: string) =>
-  path.join(MONSTERS_DIR, size, "Paired", `${cape}Bottom.png`);
+  cape.startsWith("Class/")
+    ? path.join(MONSTERS_DIR, size, "Class", `${cape.slice(6)}Bottom.png`)
+    : path.join(MONSTERS_DIR, size, "Paired", `${cape}Bottom.png`);
 const capeTopPath = (size: "Big" | "Small", cape: string) =>
-  path.join(MONSTERS_DIR, size, "Paired", `${cape}Top.png`);
+  cape.startsWith("Class/")
+    ? path.join(MONSTERS_DIR, size, "Class", `${cape.slice(6)}Top.png`)
+    : path.join(MONSTERS_DIR, size, "Paired", `${cape}Top.png`);
+const wigBottomPath = (size: "Big" | "Small", wig: string) =>
+  wig.startsWith("Class/")
+    ? path.join(MONSTERS_DIR, size, "Class", `${wig.slice(6)}Bottom.png`)
+    : path.join(MONSTERS_DIR, size, "Paired", `${wig}Bottom.png`);
+const wigTopPath = (size: "Big" | "Small", wig: string) =>
+  wig.startsWith("Class/")
+    ? path.join(MONSTERS_DIR, size, "Class", `${wig.slice(6)}Top.png`)
+    : path.join(MONSTERS_DIR, size, "Paired", `${wig}Top.png`);
 
 // Mood-aware overlay paths. As of the recent HabitBeast consolidation, both
 // mustaches and lip styles live in {size}/Mouths/ — each style ships 5 mood
@@ -435,17 +449,18 @@ const isBeardFile = (f: string) => /Beard\.png$/i.test(f);
 // Same suffix conventions as server.ts's clothingSlot helper.
 type ClothingBucket = "hat" | "chest" | "pants" | "shoes" | "beard" | "other";
 function clothingBucket(filename: string): ClothingBucket {
-  const name = filename.replace(/\.png$/i, "");
-  if (/Beard$/i.test(name))                             return "beard";
-  if (/(CowboyHat|WizardHat|Hat|Cap)$/i.test(name))     return "hat";
-  if (/(Vest|Sash|Tee|Shirt|Tank)$/i.test(name))        return "chest";
-  if (/(Pants|Bottoms|Trunks)$/i.test(name))            return "pants";
-  if (/(Kicks|Shoes|Boots|Slippas)$/i.test(name))       return "shoes";
+  // Strip Class/ subfolder prefix before matching
+  const base = filename.replace(/^Class\//i, "").replace(/\.png$/i, "");
+  if (/(Beard|Strap)$/i.test(base))                                return "beard";
+  if (/(CowboyHat|WizardHat|Hat|Cap|Crown)$/i.test(base))         return "hat";
+  if (/(Vest|Sash|Tee|Shirt|Tank|Nail)$/i.test(base) || /^pressed/i.test(base)) return "chest";
+  if (/(Pants|Bottoms|Trunks)$/i.test(base))                      return "pants";
+  if (/(Kicks|Shoes|Boots|Slippas|Rollerblades)$/i.test(base))    return "shoes";
   return "other";
 }
 
-async function composeFrame(opts: FrameOpts): Promise<Buffer> {
-  const { monster, mood, eyeState, bgColor, backgroundImage, clothing = [], bottom, cape, mustache, mouthStyle, fartFrame, width, height } = opts;
+export async function composeFrame(opts: FrameOpts): Promise<Buffer> {
+  const { monster, mood, eyeState, bgColor, backgroundImage, clothing = [], bottom, cape, wig, mustache, mouthStyle, fartFrame, width, height } = opts;
   const size = sizeFor(monster);
 
   // Bucket clothing so each piece lands at the right z-depth. Pants/shoes/chest
@@ -466,6 +481,7 @@ async function composeFrame(opts: FrameOpts): Promise<Buffer> {
   const layers: string[] = [];
   if (fartFrame !== undefined) layers.push(fartFramePath(fartFrame));
   if (cape)   layers.push(capeBottomPath(size, cape));
+  if (wig)    layers.push(wigBottomPath(size, wig));
   if (bottom) layers.push(path.join(MONSTERS_DIR, "Bottom", bottom));
   layers.push(path.join(MONSTERS_DIR, `${monster}.png`));
   for (const c of byBucket.pants) layers.push(path.join(MONSTERS_DIR, size, c));
@@ -475,6 +491,7 @@ async function composeFrame(opts: FrameOpts): Promise<Buffer> {
   if (mustache) layers.push(mustachePath(size, mustache, mood));
   layers.push(path.join(MONSTERS_DIR, size, "Eyes", EYE_FOLDER[monster], `${eyeState}.png`));
   if (cape) layers.push(capeTopPath(size, cape));
+  if (wig)  layers.push(wigTopPath(size, wig));
   for (const b of byBucket.beard) layers.push(path.join(MONSTERS_DIR, size, b));
   for (const c of byBucket.hat)   layers.push(path.join(MONSTERS_DIR, size, c));
   for (const c of byBucket.other) layers.push(path.join(MONSTERS_DIR, size, c));
@@ -547,6 +564,7 @@ export interface BlinkClipOpts {
   clothing?: string[];
   bottom?: string;
   cape?: string;           // e.g. "blackCape" — pairs Top + Bottom from {size}/Paired/
+  wig?: string;            // e.g. "elvisWig" — independent paired wig layer
   mustache?: string;       // e.g. "founder" / "greenStash" / "hairy" — mood-driven overlay
   mouthStyle?: string;     // e.g. "pretty" / "red" — mood-driven styled lips
   /** Image background relative to MONSTERS_DIR (e.g. "Background/aquarium.png"). */
@@ -571,6 +589,7 @@ export async function renderBlinkClip(opts: BlinkClipOpts): Promise<string> {
     clothing,
     bottom,
     cape,
+    wig,
     mustache,
     mouthStyle,
     backgroundImage,
@@ -602,7 +621,7 @@ export async function renderBlinkClip(opts: BlinkClipOpts): Promise<string> {
       if (framePaths[k]) continue;
       const buf = await composeFrame({
         monster, mood: block.mood, eyeState: block.state, bgColor,
-        clothing, bottom, cape, mustache, mouthStyle, backgroundImage, width, height,
+        clothing, bottom, cape, wig, mustache, mouthStyle, backgroundImage, width, height,
       });
       const p = path.join(tmpDir, `${k}.png`);
       fs.writeFileSync(p, buf);
@@ -699,6 +718,7 @@ export interface FartClipOpts {
   clothing?: string[];
   bottom?: string;
   cape?: string;
+  wig?: string;
   mustache?: string;
   mouthStyle?: string;
   backgroundImage?: string;
@@ -723,6 +743,7 @@ export async function renderFartClip(opts: FartClipOpts): Promise<string> {
     clothing,
     bottom,
     cape,
+    wig,
     mustache,
     mouthStyle,
     backgroundImage,
@@ -755,7 +776,7 @@ export async function renderFartClip(opts: FartClipOpts): Promise<string> {
       if (cache[key]) continue;
       const buf = await composeFrame({
         monster, mood: block.mood, eyeState: block.eyeState, bgColor,
-        clothing, bottom, cape, mustache, mouthStyle, backgroundImage, fartFrame: block.fartFrame, width, height,
+        clothing, bottom, cape, wig, mustache, mouthStyle, backgroundImage, fartFrame: block.fartFrame, width, height,
       });
       const p = path.join(tmpDir, `${key}.png`);
       fs.writeFileSync(p, buf);
@@ -813,6 +834,7 @@ export interface GridCell {
   clothing?: string[];
   bottom?: string;
   cape?: string;
+  wig?: string;
   mustache?: string;
   mouthStyle?: string;
   /** Behavior beat to play during the main loop. Stagger these across cells for a cascade. */
@@ -919,7 +941,7 @@ export async function renderBradyBunch(opts: BradyBunchOpts): Promise<string> {
         if (cellFrames[k]) return;
         const buf = await composeFrame({
           monster: cell.monster, mood: m, eyeState: s, bgColor,
-          clothing: cell.clothing, bottom: cell.bottom, cape: cell.cape, mustache: cell.mustache, mouthStyle: cell.mouthStyle,
+          clothing: cell.clothing, bottom: cell.bottom, cape: cell.cape, wig: cell.wig, mustache: cell.mustache, mouthStyle: cell.mouthStyle,
           width: cellSize, height: cellSize,
         });
         const p = path.join(tmpDir, `c${i}_${k}.png`);
@@ -947,7 +969,7 @@ export async function renderBradyBunch(opts: BradyBunchOpts): Promise<string> {
           if (cellByKey[k]) continue;
           const buf = await composeFrame({
             monster: cell.monster, mood: block.mood, eyeState: block.eyeState,
-            bgColor, clothing: cell.clothing, bottom: cell.bottom, cape: cell.cape, mustache: cell.mustache, mouthStyle: cell.mouthStyle,
+            bgColor, clothing: cell.clothing, bottom: cell.bottom, cape: cell.cape, wig: cell.wig, mustache: cell.mustache, mouthStyle: cell.mouthStyle,
             fartFrame: block.fartFrame, width: cellSize, height: cellSize,
           });
           const p = path.join(tmpDir, `c${i}_fart_${k}.png`);
@@ -1229,7 +1251,7 @@ export async function renderLineupPan(opts: LineupPanOpts): Promise<string> {
         if (cellFrames[k]) return;
         const buf = await composeFrame({
           monster: cell.monster, mood: m, eyeState: s, bgColor: bg,
-          clothing: cell.clothing, bottom: cell.bottom, cape: cell.cape, mustache: cell.mustache, mouthStyle: cell.mouthStyle,
+          clothing: cell.clothing, bottom: cell.bottom, cape: cell.cape, wig: cell.wig, mustache: cell.mustache, mouthStyle: cell.mouthStyle,
           width: cellSize, height: cellSize,
         });
         const p = path.join(tmpDir, `c${i}_${k}.png`);
@@ -1252,7 +1274,7 @@ export async function renderLineupPan(opts: LineupPanOpts): Promise<string> {
           if (cellByKey[k]) continue;
           const buf = await composeFrame({
             monster: cell.monster, mood: block.mood, eyeState: block.eyeState,
-            bgColor: bg, clothing: cell.clothing, bottom: cell.bottom, cape: cell.cape, mustache: cell.mustache, mouthStyle: cell.mouthStyle,
+            bgColor: bg, clothing: cell.clothing, bottom: cell.bottom, cape: cell.cape, wig: cell.wig, mustache: cell.mustache, mouthStyle: cell.mouthStyle,
             fartFrame: block.fartFrame, width: cellSize, height: cellSize,
           });
           const p = path.join(tmpDir, `c${i}_fart_${k}.png`);
